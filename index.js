@@ -1,8 +1,6 @@
 /**
  * Dependencies
  */
-const fs = require("fs");
-const path = require("path");
 const express = require("express");
 const { Juspay, APIError } = require("expresscheckout-nodejs");
 
@@ -18,10 +16,15 @@ const SANDBOX_BASE_URL = "https://smartgatewayuat.hdfcbank.com"; // 🔹 UAT San
 const PRODUCTION_BASE_URL = "https://smartgateway.hdfcbank.com"; // 🔹 Live URL
 
 /**
- * Load Keys
+ * Load Keys from Environment Variables
  */
-const publicKey = fs.readFileSync(path.resolve(__dirname, config.PUBLIC_KEY_PATH));
-const privateKey = fs.readFileSync(path.resolve(__dirname, config.PRIVATE_KEY_PATH));
+const publicKey = process.env.PUBLIC_KEY;
+const privateKey = process.env.PRIVATE_KEY;
+
+if (!publicKey || !privateKey) {
+  console.error("❌ Missing PUBLIC_KEY or PRIVATE_KEY in environment variables!");
+  process.exit(1);
+}
 
 /**
  * Initialize Juspay SDK
@@ -50,7 +53,7 @@ app.use(express.urlencoded({ extended: true }));
  * Route: Home
  */
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(require("path").join(__dirname, "index.html"));
 });
 
 /**
@@ -138,3 +141,4 @@ function sendError(res, error) {
   console.error("Unexpected Error:", error);
   return res.status(500).json(makeError());
 }
+
