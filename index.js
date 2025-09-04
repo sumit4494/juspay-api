@@ -2,6 +2,7 @@
  * Dependencies
  */
 const express = require("express");
+const path = require("path");
 const { Juspay, APIError } = require("expresscheckout-nodejs");
 
 /**
@@ -13,7 +14,7 @@ const config = require("./config.json");
  * Environment URLs
  */
 const SANDBOX_BASE_URL = "https://smartgatewayuat.hdfcbank.com"; // 🔹 UAT Sandbox
-const PRODUCTION_BASE_URL = "https://smartgateway.hdfcbank.com"; // 🔹 Live URL
+const PRODUCTION_BASE_URL = "https://smartgateway.hdfcbank.com";  // 🔹 Live URL
 
 /**
  * Load Keys from Environment Variables
@@ -31,7 +32,7 @@ if (!publicKey || !privateKey) {
  */
 const juspay = new Juspay({
   merchantId: config.MERCHANT_ID,
-  baseUrl: SANDBOX_BASE_URL, // 🔹 Change to PRODUCTION_BASE_URL when going live
+  baseUrl: SANDBOX_BASE_URL, // 🔹 Change to PRODUCTION_BASE_URL when live
   jweAuth: {
     keyId: config.KEY_UUID,
     publicKey,
@@ -43,34 +44,36 @@ const juspay = new Juspay({
  * Initialize Express App
  */
 const app = express();
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /**
- * Route: Home
+ * Route: Home Page
  */
 app.get("/", (req, res) => {
-  res.sendFile(require("path").join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 /**
  * Route: Initiate Juspay Payment
  */
 app.post("/initiateJuspayPayment", async (req, res) => {
-  const orderId = `order_${Date.now()}`;
-  const amount = Math.floor(1 + Math.random() * 100); // 🔹 Demo random amount
+  const { amount, customer_id } = req.body;
 
-  const returnUrl = `https://jeyporedukaan.in/handleJuspayResponse`; // 🔹 Replace with your domain
+  const orderId = `order_${Date.now()}`;
+  const paymentAmount = amount || "100.00"; // 🔹 Default ₹100 for demo
+  const customerId = customer_id || "test_customer_1";
+  const returnUrl = `https://jeyporedukaan.in/handleJuspayResponse`;
 
   try {
     const sessionResponse = await juspay.orderSession.create({
       order_id: orderId,
-      amount: amount,
+      amount: paymentAmount,
       payment_page_client_id: config.PAYMENT_PAGE_CLIENT_ID,
-      customer_id: "hdfc-testing-customer-one", // 🔹 Replace dynamically if needed
+      customer_id: customerId,
       action: "paymentPage",
       return_url: returnUrl,
       currency: "INR",
@@ -83,7 +86,7 @@ app.post("/initiateJuspayPayment", async (req, res) => {
 });
 
 /**
- * Route: Handle Juspay Callback
+ * Route: Handle Juspay Payment Callback
  */
 app.post("/handleJuspayResponse", async (req, res) => {
   const orderId = req.body.order_id || req.body.orderId;
@@ -94,19 +97,19 @@ app.post("/handleJuspayResponse", async (req, res) => {
 
   try {
     const statusResponse = await juspay.order.status(orderId);
-    const orderStatus = statusResponse.status;
+    const status = statusResponse.status;
 
     const messages = {
-      CHARGED: "Order payment successful ✅",
-      PENDING: "Order payment is pending ⏳",
-      PENDING_VBV: "Order payment is pending ⏳",
-      AUTHORIZATION_FAILED: "Order payment authorization failed ❌",
-      AUTHENTICATION_FAILED: "Order payment authentication failed ❌",
+      CHARGED: "✅ Payment successful",
+      PENDING: "⏳ Payment is pending",
+      PENDING_VBV: "⏳ Payment is pending",
+      AUTHORIZATION_FAILED: "❌ Authorization failed",
+      AUTHENTICATION_FAILED: "❌ Authentication failed",
     };
 
     res.json({
       ...cleanResponse(statusResponse),
-      message: messages[orderStatus] || `Order status: ${orderStatus}`,
+      message: messages[status] || `Order status: ${status}`,
     });
   } catch (error) {
     sendError(res, error);
@@ -116,8 +119,8 @@ app.post("/handleJuspayResponse", async (req, res) => {
 /**
  * Start Server
  */
-app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`🚀 Juspay Server running at http://localhost:${PORT}`);
 });
 
 /**
@@ -130,7 +133,7 @@ function makeError(message) {
 function cleanResponse(response) {
   if (!response) return response;
   const rsp = { ...response };
-  delete rsp.http; // Remove unnecessary field
+  delete rsp.http; // Remove unnecessary fields
   return rsp;
 }
 
