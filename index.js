@@ -3,6 +3,7 @@
  */
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
 const { Juspay, APIError } = require("expresscheckout-nodejs");
 
 /**
@@ -17,22 +18,17 @@ const SANDBOX_BASE_URL = "https://smartgatewayuat.hdfcbank.com"; // 🔹 UAT San
 const PRODUCTION_BASE_URL = "https://smartgateway.hdfcbank.com";  // 🔹 Live URL
 
 /**
- * Load Keys from Environment Variables
+ * Load Keys from Files (not environment variables)
  */
-const publicKey = process.env.PUBLIC_KEY;
-const privateKey = process.env.PRIVATE_KEY;
-
-if (!publicKey || !privateKey) {
-  console.error("❌ Missing PUBLIC_KEY or PRIVATE_KEY in environment variables!");
-  process.exit(1);
-}
+const publicKey = fs.readFileSync(path.join(__dirname, config.PUBLIC_KEY_PATH), "utf8");
+const privateKey = fs.readFileSync(path.join(__dirname, config.PRIVATE_KEY_PATH), "utf8");
 
 /**
  * Initialize Juspay SDK
  */
 const juspay = new Juspay({
   merchantId: config.MERCHANT_ID,
-  baseUrl: SANDBOX_BASE_URL, // 🔹 Change to PRODUCTION_BASE_URL when live
+  baseUrl: SANDBOX_BASE_URL, // 🔹 Change to PRODUCTION_BASE_URL for live
   jweAuth: {
     keyId: config.KEY_UUID,
     publicKey,
@@ -60,11 +56,11 @@ app.get("/", (req, res) => {
 /**
  * Route: Initiate Juspay Payment
  */
-app.post("/initiateJuspayPayment", async (req, res) => {
+app.post("/juspay/initiatePayment", async (req, res) => {
   const { amount, customer_id } = req.body;
 
   const orderId = `order_${Date.now()}`;
-  const paymentAmount = amount || "100.00"; // 🔹 Default ₹100 for demo
+  const paymentAmount = amount || "100.00"; // Default ₹100 for demo
   const customerId = customer_id || "test_customer_1";
   const returnUrl = `https://jeyporedukaan.in/handleJuspayResponse`;
 
@@ -144,4 +140,3 @@ function sendError(res, error) {
   console.error("Unexpected Error:", error);
   return res.status(500).json(makeError());
 }
-
