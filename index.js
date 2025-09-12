@@ -22,6 +22,14 @@ const PRODUCTION_BASE_URL = "https://smartgateway.hdfcbank.com";  // 🔹 Live U
 const publicKey = process.env.PUBLIC_KEY;
 const privateKey = process.env.PRIVATE_KEY;
 
+const cors = require("cors");
+app.use(cors({
+  origin: "*", // Or restrict to "https://jeyporedukaan.in"
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+
 if (!publicKey || !privateKey) {
   console.error("❌ PUBLIC_KEY or PRIVATE_KEY is missing in Render environment variables!");
   process.exit(1);
