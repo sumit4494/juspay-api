@@ -3,6 +3,7 @@
  */
 const express = require("express");
 const path = require("path");
+const cors = require("cors");
 const { Juspay, APIError } = require("expresscheckout-nodejs");
 
 /**
@@ -22,13 +23,20 @@ const PRODUCTION_BASE_URL = "https://smartgateway.hdfcbank.com";  // 🔹 Live U
 const publicKey = process.env.PUBLIC_KEY;
 const privateKey = process.env.PRIVATE_KEY;
 
-const cors = require("cors");
+/**
+ * Initialize Express App
+ */
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middlewares
 app.use(cors({
   origin: "*", // Or restrict to "https://jeyporedukaan.in"
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
-
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 if (!publicKey || !privateKey) {
   console.error("❌ PUBLIC_KEY or PRIVATE_KEY is missing in Render environment variables!");
@@ -47,16 +55,6 @@ const juspay = new Juspay({
     privateKey,
   },
 });
-
-/**
- * Initialize Express App
- */
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 /**
  * Route: Home Page
