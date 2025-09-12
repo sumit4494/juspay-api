@@ -1,18 +1,20 @@
 {
   "name": "expresscheckout-nodejs-sample-project",
   "version": "1.0.0",
-  "description": "",
+  "description": "Juspay + Express integration",
   "main": "index.js",
   "scripts": {
-    "start": "node index"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^4.21.2",
     "expresscheckout-nodejs": "^1.0.0",
     "nodemailer": "^7.0.5"
   }
 }
+
